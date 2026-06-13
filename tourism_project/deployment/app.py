@@ -5,174 +5,205 @@ from huggingface_hub import hf_hub_download
 import joblib
 
 # --------------------------------------------------
-# Load Model
-# --------------------------------------------------
-
-try:
-    model_path = hf_hub_download(
-        repo_id="jadhavsainath/tourism-model",
-        filename="best_tourism_model_v1.joblib"
-    )
-
-    model = joblib.load(model_path)
-
-except Exception as e:
-    st.error(f"Model loading failed: {str(e)}")
-    st.stop()
-
-# --------------------------------------------------
 # Page Configuration
 # --------------------------------------------------
 
 st.set_page_config(
     page_title="Wellness Tourism Package Predictor",
     page_icon="🏖️",
-    layout="centered"
+    layout="wide"
 )
+
+# --------------------------------------------------
+# Load Model
+# --------------------------------------------------
+
+@st.cache_resource
+def load_model():
+    model_path = hf_hub_download(
+        repo_id="jadhavsainath/tourism-model",
+        filename="best_tourism_model_v1.joblib"
+    )
+    return joblib.load(model_path)
+
+try:
+    model = load_model()
+except Exception as e:
+    st.error(f"Model loading failed: {str(e)}")
+    st.stop()
+
+# --------------------------------------------------
+# Header
+# --------------------------------------------------
 
 st.title("🏖️ Wellness Tourism Package Prediction")
 
 st.markdown("""
 This application helps **Visit with Us** identify customers who are likely to purchase the **Wellness Tourism Package**.
 
-Please enter customer information below and click **Predict Purchase Probability**.
+Fill in the customer profile below and click **Predict Purchase Probability**.
 """)
 
 # --------------------------------------------------
 # Input Form
 # --------------------------------------------------
 
-with st.form("prediction_form"):
+with st.expander("📝 Enter Customer Information", expanded=True):
 
-    st.header("Customer Details")
+    with st.form("prediction_form"):
 
-    Age = st.number_input(
-        "Age",
-        min_value=18,
-        max_value=100,
-        value=35
-    )
+        col1, col2, col3 = st.columns(3)
 
-    CityTier = st.selectbox(
-        "City Tier",
-        [1, 2, 3]
-    )
+        # -----------------------------------
+        # Column 1 - Customer Information
+        # -----------------------------------
 
-    NumberOfPersonVisiting = st.number_input(
-        "Number of Persons Visiting",
-        min_value=1,
-        max_value=20,
-        value=2
-    )
+        with col1:
 
-    PreferredPropertyStar = st.selectbox(
-        "Preferred Property Star",
-        [1, 2, 3, 4, 5]
-    )
+            st.subheader("👤 Customer")
 
-    NumberOfTrips = st.number_input(
-        "Number of Trips per Year",
-        min_value=0,
-        max_value=20,
-        value=2
-    )
+            Age = st.number_input(
+                "Age",
+                min_value=18,
+                max_value=100,
+                value=35
+            )
 
-    Passport = st.selectbox(
-        "Has Passport",
-        ["No", "Yes"]
-    )
+            CityTier = st.selectbox(
+                "City Tier",
+                [1, 2, 3]
+            )
 
-    OwnCar = st.selectbox(
-        "Owns Car",
-        ["No", "Yes"]
-    )
+            MonthlyIncome = st.number_input(
+                "Monthly Income",
+                min_value=0,
+                value=50000
+            )
 
-    NumberOfChildrenVisiting = st.number_input(
-        "Number of Children Visiting",
-        min_value=0,
-        max_value=10,
-        value=0
-    )
+            Gender = st.selectbox(
+                "Gender",
+                ["Male", "Female"]
+            )
 
-    MonthlyIncome = st.number_input(
-        "Monthly Income",
-        min_value=0,
-        value=50000
-    )
+            MaritalStatus = st.selectbox(
+                "Marital Status",
+                ["Single", "Married", "Divorced"]
+            )
 
-    TypeofContact = st.selectbox(
-        "Type of Contact",
-        ["Company Invited", "Self Inquiry"]
-    )
+            Occupation = st.selectbox(
+                "Occupation",
+                [
+                    "Salaried",
+                    "Small Business",
+                    "Large Business",
+                    "Freelancer"
+                ]
+            )
 
-    Occupation = st.selectbox(
-        "Occupation",
-        [
-            "Salaried",
-            "Small Business",
-            "Large Business",
-            "Freelancer"
-        ]
-    )
+        # -----------------------------------
+        # Column 2 - Travel Information
+        # -----------------------------------
 
-    Gender = st.selectbox(
-        "Gender",
-        ["Male", "Female"]
-    )
+        with col2:
 
-    st.header("Travel & Customer Information")
+            st.subheader("✈️ Travel")
 
-    MaritalStatus = st.selectbox(
-        "Marital Status",
-        ["Single", "Married", "Divorced"]
-    )
+            NumberOfTrips = st.number_input(
+                "Trips Per Year",
+                min_value=0,
+                max_value=20,
+                value=2
+            )
 
-    Designation = st.selectbox(
-        "Designation",
-        [
-            "Executive",
-            "Manager",
-            "Senior Manager",
-            "AVP",
-            "VP"
-        ]
-    )
+            NumberOfPersonVisiting = st.number_input(
+                "Persons Visiting",
+                min_value=1,
+                max_value=20,
+                value=2
+            )
 
-    ProductPitched = st.selectbox(
-        "Product Pitched",
-        [
-            "Basic",
-            "Standard",
-            "Deluxe",
-            "Super Deluxe",
-            "King"
-        ]
-    )
+            NumberOfChildrenVisiting = st.number_input(
+                "Children Visiting",
+                min_value=0,
+                max_value=10,
+                value=0
+            )
 
-    PitchSatisfactionScore = st.slider(
-        "Pitch Satisfaction Score",
-        min_value=1,
-        max_value=5,
-        value=3
-    )
+            PreferredPropertyStar = st.selectbox(
+                "Preferred Property Star",
+                [1, 2, 3, 4, 5]
+            )
 
-    NumberOfFollowups = st.number_input(
-        "Number Of Followups",
-        min_value=0,
-        max_value=20,
-        value=3
-    )
+            Passport = st.selectbox(
+                "Passport",
+                ["No", "Yes"]
+            )
 
-    DurationOfPitch = st.number_input(
-        "Duration Of Pitch (minutes)",
-        min_value=0,
-        max_value=120,
-        value=15
-    )
+            OwnCar = st.selectbox(
+                "Own Car",
+                ["No", "Yes"]
+            )
 
-    submitted = st.form_submit_button(
-        "Predict Purchase Probability"
-    )
+        # -----------------------------------
+        # Column 3 - Sales Interaction
+        # -----------------------------------
+
+        with col3:
+
+            st.subheader("📞 Sales Interaction")
+
+            TypeofContact = st.selectbox(
+                "Type of Contact",
+                ["Company Invited", "Self Inquiry"]
+            )
+
+            ProductPitched = st.selectbox(
+                "Product Pitched",
+                [
+                    "Basic",
+                    "Standard",
+                    "Deluxe",
+                    "Super Deluxe",
+                    "King"
+                ]
+            )
+
+            Designation = st.selectbox(
+                "Designation",
+                [
+                    "Executive",
+                    "Manager",
+                    "Senior Manager",
+                    "AVP",
+                    "VP"
+                ]
+            )
+
+            PitchSatisfactionScore = st.slider(
+                "Pitch Satisfaction Score",
+                min_value=1,
+                max_value=5,
+                value=3
+            )
+
+            NumberOfFollowups = st.number_input(
+                "Number Of Followups",
+                min_value=0,
+                max_value=20,
+                value=3
+            )
+
+            DurationOfPitch = st.number_input(
+                "Duration Of Pitch (Minutes)",
+                min_value=0,
+                max_value=120,
+                value=15
+            )
+
+        submitted = st.form_submit_button(
+            "🔮 Predict Purchase Probability",
+            use_container_width=True
+        )
 
 # --------------------------------------------------
 # Prediction
@@ -203,27 +234,78 @@ if submitted:
 
     classification_threshold = 0.45
 
-    try:
+    with st.spinner("🔍 Analyzing customer profile..."):
 
-        prediction_proba = model.predict_proba(input_data)[0, 1]
-        prediction = int(
-            prediction_proba >= classification_threshold
-        )
+        try:
 
-        st.subheader("Prediction Result")
+            prediction_proba = model.predict_proba(input_data)[0, 1]
 
-        if prediction == 1:
-            st.success(
-                f"Customer is likely to purchase the Wellness Tourism Package.\n\n"
-                f"Probability: {prediction_proba:.2%}"
-            )
-        else:
-            st.warning(
-                f"Customer is unlikely to purchase the Wellness Tourism Package.\n\n"
-                f"Probability: {prediction_proba:.2%}"
+            prediction = int(
+                prediction_proba >= classification_threshold
             )
 
-        st.progress(float(prediction_proba))
+            st.divider()
 
-    except Exception as e:
-        st.error(f"Prediction failed: {str(e)}")
+            st.subheader("📊 Prediction Result")
+
+            c1, c2 = st.columns(2)
+
+            with c1:
+                st.metric(
+                    "Purchase Probability",
+                    f"{prediction_proba:.2%}"
+                )
+
+            with c2:
+                st.metric(
+                    "Prediction",
+                    "Likely Buyer" if prediction else "Unlikely Buyer"
+                )
+
+            st.progress(float(prediction_proba))
+
+            if prediction_proba >= 0.75:
+
+                st.success(
+                    "🟢 Very High Purchase Potential"
+                )
+
+                st.balloons()
+
+                st.info(
+                    "🎯 Recommended Action: Contact immediately and offer premium package discounts."
+                )
+
+            elif prediction_proba >= 0.50:
+
+                st.info(
+                    "🔵 Moderate Purchase Potential"
+                )
+
+                st.info(
+                    "🎯 Recommended Action: Schedule follow-up calls and targeted promotions."
+                )
+
+            else:
+
+                st.warning(
+                    "🟠 Low Purchase Potential"
+                )
+
+                st.warning(
+                    "🎯 Recommended Action: Add customer to a nurturing campaign."
+                )
+
+            with st.expander("📋 Customer Summary"):
+
+                st.dataframe(
+                    input_data,
+                    use_container_width=True
+                )
+
+        except Exception as e:
+
+            st.error(
+                f"Prediction failed: {str(e)}"
+            )
+
