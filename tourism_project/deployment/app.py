@@ -16,7 +16,7 @@ filename="best_churn_model_v1.joblib"
 model = joblib.load(model_path)
 
 st.set_page_config(
-page_title="Wellness Tourism Package Predictor..",
+page_title="Wellness Tourism Package Predictor",
 page_icon="✈️",
 layout="wide"
 )
