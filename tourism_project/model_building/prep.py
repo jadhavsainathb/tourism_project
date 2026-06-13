@@ -55,7 +55,7 @@ y = tourism_dataset[target]
 Xtrain, Xtest, ytrain, ytest = train_test_split(
     X, y,              # Predictors (X) and target variable (y)
     test_size=0.2,     # 20% of the data is reserved for testing
-    random_state=42    # Ensures reproducibility by setting a fixed random seed,
+    random_state=42,    # Ensures reproducibility by setting a fixed random seed,
     stratify=y
 )
 
