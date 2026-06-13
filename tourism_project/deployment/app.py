@@ -4,54 +4,39 @@ import pandas as pd
 from huggingface_hub import hf_hub_download
 import joblib
 
-# --------------------------------------------------
-# Load Model
-# --------------------------------------------------
-
-try:
-    model_path = hf_hub_download(
-        repo_id="jadhavsainath/tourism-model",
-        filename="best_tourism_model_v1.joblib"
-    )
-
-    model = joblib.load(model_path)
-
-except Exception as e:
-    st.error(f"Model loading failed: {str(e)}")
-    st.stop()
-
-# --------------------------------------------------
-# Page Configuration
-# --------------------------------------------------
-
-st.set_page_config(
-    page_title="Wellness Tourism Package Predictor",
-    page_icon="🏖️",
-    layout="centered"
+# Download model from Hugging Face Hub
+model_path = hf_hub_download(
+    repo_id="jadhavsainath/tourism-model",
+    filename="best_tourism_model_v1.joblib"
 )
 
+# Load model
+model = joblib.load(model_path)
+
+# Page configuration
+st.set_page_config(
+    page_title="Wellness Tourism Package Predictor",
+    page_icon="✈️",
+    layout="wide"
+)
+
+# Title
 st.title("🏖️ Wellness Tourism Package Prediction")
 
 st.markdown("""
-This application helps **Visit with Us** identify customers who are likely to purchase the **Wellness Tourism Package**.
+This application helps **Visit with Us** identify customers who are likely
+to purchase the **Wellness Tourism Package**.
 
-Please enter customer information below and click **Predict Purchase Probability**.
+Enter customer information and interaction details below to generate a prediction.
 """)
 
-# --------------------------------------------------
-# Input Form
-# --------------------------------------------------
+# Customer Details
+st.header("Customer Details")
 
-with st.form("prediction_form"):
+col1, col2 = st.columns(2)
 
-    st.header("Customer Details")
-
-    Age = st.number_input(
-        "Age",
-        min_value=18,
-        max_value=100,
-        value=35
-    )
+with col1:
+    Age = st.number_input("Age", min_value=18, max_value=100, value=35)
 
     CityTier = st.selectbox(
         "City Tier",
@@ -82,6 +67,7 @@ with st.form("prediction_form"):
         ["No", "Yes"]
     )
 
+with col2:
     OwnCar = st.selectbox(
         "Owns Car",
         ["No", "Yes"]
@@ -120,8 +106,12 @@ with st.form("prediction_form"):
         ["Male", "Female"]
     )
 
-    st.header("Travel & Customer Information")
+# Travel & Customer Information
+st.header("Travel & Customer Information")
 
+col3, col4 = st.columns(2)
+
+with col3:
     MaritalStatus = st.selectbox(
         "Marital Status",
         ["Single", "Married", "Divorced"]
@@ -138,6 +128,7 @@ with st.form("prediction_form"):
         ]
     )
 
+with col4:
     ProductPitched = st.selectbox(
         "Product Pitched",
         [
@@ -170,60 +161,48 @@ with st.form("prediction_form"):
         value=15
     )
 
-    submitted = st.form_submit_button(
-        "Predict Purchase Probability"
-    )
+# Create dataframe for prediction
+input_data = pd.DataFrame([{
+    "Age": Age,
+    "CityTier": CityTier,
+    "NumberOfPersonVisiting": NumberOfPersonVisiting,
+    "PreferredPropertyStar": PreferredPropertyStar,
+    "NumberOfTrips": NumberOfTrips,
+    "Passport": 1 if Passport == "Yes" else 0,
+    "OwnCar": 1 if OwnCar == "Yes" else 0,
+    "NumberOfChildrenVisiting": NumberOfChildrenVisiting,
+    "MonthlyIncome": MonthlyIncome,
+    "PitchSatisfactionScore": PitchSatisfactionScore,
+    "NumberOfFollowups": NumberOfFollowups,
+    "DurationOfPitch": DurationOfPitch,
+    "TypeofContact": TypeofContact,
+    "Occupation": Occupation,
+    "Gender": Gender,
+    "MaritalStatus": MaritalStatus,
+    "Designation": Designation,
+    "ProductPitched": ProductPitched
+}])
 
-# --------------------------------------------------
-# Prediction
-# --------------------------------------------------
+# Prediction threshold
+classification_threshold = 0.45
 
-if submitted:
+# Predict button
+if st.button("Predict Purchase Probability"):
 
-    input_data = pd.DataFrame([{
-        "Age": Age,
-        "CityTier": CityTier,
-        "NumberOfPersonVisiting": NumberOfPersonVisiting,
-        "PreferredPropertyStar": PreferredPropertyStar,
-        "NumberOfTrips": NumberOfTrips,
-        "Passport": 1 if Passport == "Yes" else 0,
-        "OwnCar": 1 if OwnCar == "Yes" else 0,
-        "NumberOfChildrenVisiting": NumberOfChildrenVisiting,
-        "MonthlyIncome": MonthlyIncome,
-        "PitchSatisfactionScore": PitchSatisfactionScore,
-        "NumberOfFollowups": NumberOfFollowups,
-        "DurationOfPitch": DurationOfPitch,
-        "TypeofContact": TypeofContact,
-        "Occupation": Occupation,
-        "Gender": Gender,
-        "MaritalStatus": MaritalStatus,
-        "Designation": Designation,
-        "ProductPitched": ProductPitched
-    }])
+    prediction_proba = model.predict_proba(input_data)[0, 1]
+    prediction = int(prediction_proba >= classification_threshold)
 
-    classification_threshold = 0.45
+    st.subheader("Prediction Result")
 
-    try:
-
-        prediction_proba = model.predict_proba(input_data)[0, 1]
-        prediction = int(
-            prediction_proba >= classification_threshold
+    if prediction == 1:
+        st.success(
+            f"Customer is likely to purchase the Wellness Tourism Package "
+            f"(Probability: {prediction_proba:.2%})"
+        )
+    else:
+        st.warning(
+            f"Customer is unlikely to purchase the Wellness Tourism Package "
+            f"(Probability: {prediction_proba:.2%})"
         )
 
-        st.subheader("Prediction Result")
-
-        if prediction == 1:
-            st.success(
-                f"Customer is likely to purchase the Wellness Tourism Package.\n\n"
-                f"Probability: {prediction_proba:.2%}"
-            )
-        else:
-            st.warning(
-                f"Customer is unlikely to purchase the Wellness Tourism Package.\n\n"
-                f"Probability: {prediction_proba:.2%}"
-            )
-
-        st.progress(float(prediction_proba))
-
-    except Exception as e:
-        st.error(f"Prediction failed: {str(e)}")
+    st.progress(float(prediction_proba))
